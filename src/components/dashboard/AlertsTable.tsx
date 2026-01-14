@@ -39,7 +39,7 @@ export function AlertsTable() {
                 </td>
                 <td className="text-foreground">{alert.message}</td>
                 <td className="text-muted-foreground">{alert.truck}</td>
-                <td className="text-muted-foreground">{alert.time}</td>
+                <td className="text-muted-foreground">{alert.timestamp}</td>
               </tr>
             ))}
           </tbody>
