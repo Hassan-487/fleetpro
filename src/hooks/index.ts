@@ -1,5 +1,5 @@
 // Centralized hooks exports
-export * from './useAuth';
+export { useAuth, AuthProvider } from './useAuth';
 export * from './useDrivers';
 export * from './useTrucks';
 export * from './useTrips';
