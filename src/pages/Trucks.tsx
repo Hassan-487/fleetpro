@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTrucks } from "@/hooks/useTrucks";
 import { AddTruckDialog } from "@/components/AddTruckDialog";
 import { TruckDetailsSheet } from "@/components/TruckDetailSheet";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 
 const getStatusBadgeClass = (status: string) => {
@@ -55,9 +56,11 @@ export default function Trucks() {
           <h2 className="text-2xl font-bold tracking-tight">Fleet Inventory</h2>
           <p className="text-sm text-muted-foreground">Manage and track your active vehicles.</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Add New Truck
-        </Button>
+        <PermissionGuard>
+          <Button onClick={() => setIsAddOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Add New Truck
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* ================= SEARCH ================= */}

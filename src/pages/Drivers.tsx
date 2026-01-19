@@ -9,6 +9,7 @@ import { useDrivers } from "@/hooks/useDrivers";
 import { AddDriverDialog } from "@/components/AddDriverDialog";
 import { UpdateDriverDialog } from "@/components/UpdateDriverDialog";
 import { DriverProfileSheet } from "@/components/DriverDetailSheet"; 
+import { PermissionGuard } from "@/components/PermissionGuard";
 
 const getStatusBadgeClass = (status: string) => {
   switch (status?.toLowerCase()) {
@@ -47,7 +48,10 @@ export default function Drivers() {
           <h2 className="text-2xl font-bold tracking-tight">Fleet Drivers</h2>
           <p className="text-sm text-muted-foreground">Manage your workforce and monitor safety performance.</p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="gap-2 shadow-sm"><Plus className="h-4 w-4" /> Add Driver</Button>
+
+        <PermissionGuard>
+          <Button onClick={() => setAddOpen(true)} className="gap-2 shadow-sm"><Plus className="h-4 w-4" /> Add Driver</Button>
+        </PermissionGuard>
       </div>
 
       <div className="relative max-w-md">
@@ -108,15 +112,16 @@ export default function Drivers() {
             selectedDriver={selectedDriver} 
             getStatusBadgeClass={getStatusBadgeClass} 
           />
-
-          <SheetFooter className="p-6 border-t bg-muted/10 mt-auto">
-            <div className="flex w-full gap-4">
-              <Button className="flex-1 gap-2 h-11" variant="outline" onClick={() => setEditOpen(true)}><Edit3 className="h-4 w-4" /> Edit Profile</Button>
-              <Button className="flex-1 gap-2 h-11" variant="destructive" onClick={async () => { if(confirm("Delete driver?")) { await deleteDriver(selectedDriver._id); setSelectedDriver(null); } }}>
-                <Trash2 className="h-4 w-4" /> Delete Profile
-              </Button>
+          <PermissionGuard>
+            <SheetFooter className="p-6 border-t bg-muted/10 mt-auto">
+              <div className="flex w-full gap-4">
+                <Button className="flex-1 gap-2 h-11" variant="outline" onClick={() => setEditOpen(true)}><Edit3 className="h-4 w-4" /> Edit Profile</Button>
+                <Button className="flex-1 gap-2 h-11" variant="destructive" onClick={async () => { if(confirm("Delete driver?")) { await deleteDriver(selectedDriver._id); setSelectedDriver(null); } }}>
+                  <Trash2 className="h-4 w-4" /> Delete Profile
+                </Button>
             </div>
           </SheetFooter>
+          </PermissionGuard>
         </SheetContent>
       </Sheet>
 

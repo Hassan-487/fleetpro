@@ -1,6 +1,4 @@
 
-
-
 import { useState } from "react";
 import { 
   Plus, Search, MapPin, Loader2, Trash2, Edit3, Gauge, Navigation, 
@@ -15,8 +13,9 @@ import { useTrips, useDeleteTrip } from "@/hooks/useTrips";
 import { CreateTripDialog } from "@/components/CreateTripDialog";
 import { UpdateTripDialog } from "@/components/UpdateTripDialog";
 import { TripMap } from "@/components/TripMap";
+import { PermissionGuard } from "@/components/PermissionGuard";
 
-// Professional status badge styles
+
 const getStatusBadgeStyles = (status: string) => {
   switch (status?.toLowerCase()) {
     case "scheduled": return "bg-blue-500/10 text-blue-600 border-blue-200";
@@ -51,9 +50,11 @@ export default function Trips() {
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Trip Management</h2>
           <p className="text-sm text-muted-foreground font-medium">Monitor active shipments and real-time movement.</p>
         </div>
-        <Button onClick={() => setOpenCreate(true)} className="gap-2 shadow-sm">
-          <Plus className="h-4 w-4" /> Create Trip
-        </Button>
+        <PermissionGuard>
+          <Button onClick={() => setOpenCreate(true)} className="gap-2 shadow-sm">
+            <Plus className="h-4 w-4" /> Create Trip
+          </Button>
+        </PermissionGuard>
       </div>
 
       <div className="relative max-w-md">
@@ -136,7 +137,8 @@ export default function Trips() {
                 </div>
                 {selectedTrip.currentLocation ? (
                   <div className="space-y-2">
-                    <TripMap lat={selectedTrip.currentLocation.latitude} lng={selectedTrip.currentLocation.longitude} />
+                   {/* Inside selectedTrip logic */}
+                    <TripMap origin={selectedTrip.originLocation} destination={selectedTrip.destinationLocation} current={selectedTrip.currentLocation} />
                     <div className="p-3 bg-muted/20 border rounded-lg flex items-start gap-3">
                       <Info className="h-4 w-4 text-primary mt-0.5" />
                       <p className="text-xs text-muted-foreground leading-relaxed font-medium">
@@ -217,7 +219,7 @@ export default function Trips() {
             </div>
           )}
 
-          
+          <PermissionGuard>
           <SheetFooter className="p-6 border-t bg-muted/10">
             <div className="flex w-full gap-4">
               <Button className="flex-1 gap-2 h-11" variant="outline" onClick={() => setOpenUpdate(true)}>
@@ -233,6 +235,7 @@ export default function Trips() {
               </Button>
             </div>
           </SheetFooter>
+          </PermissionGuard>
         </SheetContent>
       </Sheet>
 

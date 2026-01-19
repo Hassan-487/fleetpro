@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { PermissionGuard } from "@/components/PermissionGuard";
 import { 
   Truck as TruckIcon, 
   MapPin, 
@@ -199,7 +200,7 @@ export function TruckDetailsSheet({ truck, isOpen, onClose }: any) {
             </div>
           </div>
 
-          {/* Fixed Footer with professional buttons at the bottom */}
+            <PermissionGuard>
           <SheetFooter className="p-6 border-t bg-muted/10 mt-auto">
             <div className="flex w-full gap-4">
               <Button className="flex-1 gap-2 h-11" variant="outline" onClick={() => setIsUpdateOpen(true)}>
@@ -215,6 +216,7 @@ export function TruckDetailsSheet({ truck, isOpen, onClose }: any) {
               </Button>
             </div>
           </SheetFooter>
+          </PermissionGuard>
         </SheetContent>
       </Sheet>
       
