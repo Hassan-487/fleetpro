@@ -113,7 +113,7 @@ export function LocationInput({ placeholder, onLocationSelect, defaultValue }: P
         const script = document.createElement("script");
         script.id = scriptId;
         // Uses the recommended loading=async and callback pattern
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDdoEK5Fkuee0WnosCH5PoUspKrLDkFqIk&libraries=places&loading=async&callback=initMapCallback`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=googleapikeyHERE&libraries=places&loading=async&callback=initMapCallback`;
         script.async = true;
         script.defer = true;
         
