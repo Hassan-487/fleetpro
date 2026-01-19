@@ -31,7 +31,7 @@ export function TripMap({
   const lat = current?.lat || origin?.lat || 0;
   const lng = current?.lng || origin?.lng || 0;
 
-  const mapUrl = `https://www.google.com/maps/embed/v1/view?key=AIzaSyDdoEK5Fkuee0WnosCH5PoUspKrLDkFqIk&center=${lat},${lng}&zoom=6&maptype=roadmap`;
+  const mapUrl = `https://www.google.com/maps/embed/v1/view?key=GOOGLEAPIKEYHERE&center=${lat},${lng}&zoom=6&maptype=roadmap`;
   
   // NOTE: To show 3 distinct markers in an iframe, the URL format changes slightly:
   // src={`https://www.google.com/maps/embed/v1/directions?key=AIzaSyDdoEK5Fkuee0WnosCH5PoUspKrLDkFqIk&origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}`}
