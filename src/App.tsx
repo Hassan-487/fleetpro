@@ -28,13 +28,21 @@ const App = () => (
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
+
+             <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
             <Route path="/trucks" element={<ProtectedRoute><Trucks /></ProtectedRoute>} />
             <Route path="/trips" element={<ProtectedRoute><Trips /></ProtectedRoute>} />
             <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
+             {/* <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/drivers" element={<Drivers />} />
+            <Route path="/trucks" element={<Trucks />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} /> */}
           </Routes>
         </BrowserRouter>
       </AuthProvider>

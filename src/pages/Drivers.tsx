@@ -1,238 +1,127 @@
-import { useState } from 'react';
-import { drivers } from '@/data/demoData';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, X, Phone, Mail, Award, Truck, Calendar, Gauge } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-
-type Driver = typeof drivers[0];
+import { useState, useMemo } from "react";
+import { Plus, Search, Truck, User, Edit3, Trash2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { useDrivers } from "@/hooks/useDrivers";
+import { AddDriverDialog } from "@/components/AddDriverDialog";
+import { UpdateDriverDialog } from "@/components/UpdateDriverDialog";
+import { DriverProfileSheet } from "@/components/DriverDetailSheet"; 
 
 const getStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'Active':
-      return 'status-badge status-active';
-    case 'On Leave':
-      return 'status-badge status-delayed';
-    default:
-      return 'status-badge status-completed';
+  switch (status?.toLowerCase()) {
+    case "active":
+    case "available": return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
+    case "on_leave":
+    case "on_break": return "bg-amber-500/10 text-amber-600 border-amber-200";
+    case "inactive": return "bg-slate-100 text-slate-600 border-slate-200";
+    default: return "bg-slate-100 text-slate-600 border-slate-200";
   }
 };
 
-const getScoreColor = (score: number) => {
-  if (score >= 90) return 'text-success';
-  if (score >= 75) return 'text-warning';
-  return 'text-destructive';
-};
-
 export default function Drivers() {
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const { drivers, loading, deleteDriver } = useDrivers();
+  const [selectedDriver, setSelectedDriver] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
-  const filteredDrivers = drivers.filter(driver =>
-    driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    driver.truck.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDrivers = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return (drivers || []).filter((d: any) => {
+      const fullName = `${d.firstName} ${d.lastName}`.toLowerCase();
+      const phone = d.phoneNumber?.toLowerCase() || "";
+      const truck = d.assignedTruck?.licensePlate?.toLowerCase() || "";
+      return fullName.includes(term) || phone.includes(term) || truck.includes(term);
+    });
+  }, [drivers, searchTerm]);
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-primary h-8 w-8" /></div>;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Drivers</h2>
-          <p className="text-muted-foreground">Manage your driver workforce</p>
+          <h2 className="text-2xl font-bold tracking-tight">Fleet Drivers</h2>
+          <p className="text-sm text-muted-foreground">Manage your workforce and monitor safety performance.</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Driver
-        </Button>
+        <Button onClick={() => setAddOpen(true)} className="gap-2 shadow-sm"><Plus className="h-4 w-4" /> Add Driver</Button>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search drivers..." 
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <Input placeholder="Search name, phone, or truck..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
 
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Assigned Truck</th>
-                <th>Status</th>
-                <th>Performance Score</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDrivers.map((driver) => (
-                <tr 
-                  key={driver.id} 
-                  className="cursor-pointer"
-                  onClick={() => setSelectedDriver(driver)}
-                >
-                  <td className="font-medium text-foreground">{driver.name}</td>
-                  <td className="text-muted-foreground">{driver.phone}</td>
-                  <td className="text-muted-foreground">{driver.truck}</td>
-                  <td>
-                    <span className={getStatusBadgeClass(driver.status)}>
-                      {driver.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-semibold ${getScoreColor(driver.performanceScore)}`}>
-                        {driver.performanceScore}%
-                      </span>
-                      <Progress value={driver.performanceScore} className="h-2 w-16" />
-                    </div>
-                  </td>
-                  <td>
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedDriver(driver); }}>
-                      View Details
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Driver Details Modal */}
-      <Dialog open={!!selectedDriver} onOpenChange={() => setSelectedDriver(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Driver Details</span>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedDriver(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedDriver && (
-            <div className="space-y-6">
-              {/* Header Info */}
-              <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary-foreground">
-                    {selectedDriver.name.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
-                <div className="flex-1">
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/30 border-b font-semibold">
+            <tr>
+              <th className="p-4 text-left">NAME</th>
+              <th className="p-4 text-left">CONTACT</th>
+              <th className="p-4 text-left">TRUCK</th>
+              <th className="p-4 text-left">STATUS</th>
+              <th className="p-4 text-left">SAFETY</th>
+              <th className="p-4 text-right">ACTION</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {filteredDrivers.map((driver: any) => (
+              <tr key={driver._id} className="hover:bg-muted/30">
+                <td className="p-4 font-bold">{driver.firstName} {driver.lastName}</td>
+                <td className="p-4 text-muted-foreground">{driver.phoneNumber}</td>
+                <td className="p-4">
+                  {driver.assignedTruck ? (
+                    <div className="flex items-center gap-2"><span className="font-semibold">{driver.assignedTruck.licensePlate}</span></div>
+                  ) : <span className="text-xs text-muted-foreground italic">Unassigned</span>}
+                </td>
+                <td className="p-4">
+                  <Badge variant="outline" className={`capitalize px-2.5 py-0.5 rounded-full ${getStatusBadgeClass(driver.employmentStatus)}`}>
+                    {driver.employmentStatus?.replace('_', ' ')}
+                  </Badge>
+                </td>
+                <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-semibold text-foreground">{selectedDriver.name}</h3>
-                    <span className={getStatusBadgeClass(selectedDriver.status)}>
-                      {selectedDriver.status}
-                    </span>
+                    <span className="font-bold">{driver.performanceMetrics?.safetyScore || 0}%</span>
+                    <Progress value={driver.performanceMetrics?.safetyScore || 0} className="h-1.5 w-16" />
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-muted-foreground text-sm">
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-4 w-4" />
-                      {selectedDriver.phone}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      {selectedDriver.email}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </td>
+                <td className="p-4 text-right">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedDriver(driver)}>View Profile</Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="kpi-card">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Award className="h-4 w-4" />
-                    <span className="text-xs">Performance</span>
-                  </div>
-                  <p className={`text-2xl font-bold ${getScoreColor(selectedDriver.performanceScore)}`}>
-                    {selectedDriver.performanceScore}%
-                  </p>
-                </div>
-                <div className="kpi-card">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Truck className="h-4 w-4" />
-                    <span className="text-xs">Total Trips</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">{selectedDriver.trips}</p>
-                </div>
-                <div className="kpi-card">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Gauge className="h-4 w-4" />
-                    <span className="text-xs">Total Miles</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">{selectedDriver.totalMiles.toLocaleString()}</p>
-                </div>
-                <div className="kpi-card">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-xs">Hire Date</span>
-                  </div>
-                  <p className="text-lg font-bold text-foreground">{selectedDriver.hireDate}</p>
-                </div>
-              </div>
+      <Sheet open={!!selectedDriver} onOpenChange={() => setSelectedDriver(null)}>
+        <SheetContent className="sm:max-w-md flex flex-col h-full p-0">
+          <SheetHeader className="p-6 border-b bg-card">
+            <SheetTitle className="flex items-center gap-2 text-xl font-bold"><User className="h-5 w-5 text-primary" /> Driver Profile</SheetTitle>
+          </SheetHeader>
 
-              {/* Performance Metrics */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-foreground">Performance Metrics</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">On-Time Delivery</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={selectedDriver.onTimeDelivery} className="h-2 w-32" />
-                      <span className="font-medium text-foreground w-12 text-right">{selectedDriver.onTimeDelivery}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Safety Score</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={selectedDriver.safetyScore} className="h-2 w-32" />
-                      <span className="font-medium text-foreground w-12 text-right">{selectedDriver.safetyScore}%</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Fuel Efficiency</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={selectedDriver.fuelEfficiency} className="h-2 w-32" />
-                      <span className="font-medium text-foreground w-12 text-right">{selectedDriver.fuelEfficiency}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* IMPORTED SEPARATE COMPONENT */}
+          <DriverProfileSheet 
+            selectedDriver={selectedDriver} 
+            getStatusBadgeClass={getStatusBadgeClass} 
+          />
 
-              {/* License Info */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <h4 className="font-semibold text-foreground mb-3">License Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">License Number</span>
-                    <p className="font-medium text-foreground">{selectedDriver.licenseNumber}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Expiry Date</span>
-                    <p className="font-medium text-foreground">{selectedDriver.licenseExpiry}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Assigned Truck</span>
-                    <p className="font-medium text-foreground">{selectedDriver.truck}</p>
-                  </div>
-                </div>
-              </div>
+          <SheetFooter className="p-6 border-t bg-muted/10 mt-auto">
+            <div className="flex w-full gap-4">
+              <Button className="flex-1 gap-2 h-11" variant="outline" onClick={() => setEditOpen(true)}><Edit3 className="h-4 w-4" /> Edit Profile</Button>
+              <Button className="flex-1 gap-2 h-11" variant="destructive" onClick={async () => { if(confirm("Delete driver?")) { await deleteDriver(selectedDriver._id); setSelectedDriver(null); } }}>
+                <Trash2 className="h-4 w-4" /> Delete Profile
+              </Button>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <AddDriverDialog open={addOpen} onClose={() => setAddOpen(false)} />
+      {selectedDriver && <UpdateDriverDialog open={editOpen} onClose={() => setEditOpen(false)} driver={selectedDriver} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Token management
@@ -17,7 +18,8 @@ export const removeToken = (): void => {
 
 // Create Axios instance
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  // Use proxy path - will be rewritten by Vite to http://192.168.18.15:4000/api/v1
+  baseURL: '/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -47,6 +49,11 @@ apiClient.interceptors.response.use(
       removeToken();
       // Dispatch custom event for auth context to handle
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      
+      // Optional: Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

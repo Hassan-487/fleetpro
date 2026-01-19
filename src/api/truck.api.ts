@@ -1,4 +1,3 @@
-// Truck API Endpoints
 export const TRUCK_API = {
   LIST: "/trucks",
   DETAILS: (id: string) => `/trucks/${id}`,

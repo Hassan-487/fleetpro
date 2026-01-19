@@ -1,169 +1,143 @@
-import { useState } from 'react';
-import { trucks } from '@/data/demoData';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, MapPin, Fuel } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus, Search, MapPin, Loader2, UserCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { useTrucks } from "@/hooks/useTrucks";
+import { AddTruckDialog } from "@/components/AddTruckDialog";
+import { TruckDetailsSheet } from "@/components/TruckDetailSheet";
+
 
 const getStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'In Transit':
-      return 'status-badge status-active';
-    case 'Idle':
-      return 'status-badge status-warning';
-    case 'Maintenance':
-      return 'status-badge status-maintenance';
+  const baseClass = "status-badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold border capitalize";
+  
+  switch (status?.toLowerCase()) {
+    case "available":
+      return `${baseClass} bg-emerald-500/10 text-emerald-600 border-emerald-500/20`;
+    case "in_transit":
+    case "assigned":
+      return `${baseClass} bg-blue-500/10 text-blue-600 border-blue-500/20`;
+    case "maintenance":
+      return `${baseClass} bg-amber-500/10 text-amber-600 border-amber-500/20`;
+    case "stopped":
+      return `${baseClass} bg-slate-500/10 text-slate-600 border-slate-500/20`;
+    case "out_of_service":
+      return `${baseClass} bg-rose-500/10 text-rose-600 border-rose-500/20`;
     default:
-      return 'status-badge status-completed';
+      return `${baseClass} bg-muted text-muted-foreground border-border`;
   }
 };
 
 export default function Trucks() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const { trucks, loading } = useTrucks();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTruck, setSelectedTruck] = useState<any | null>(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const filteredTrucks = trucks.filter(truck =>
-    truck.truckId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    truck.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    truck.driver.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = trucks.filter(t => 
+    ( t.licensePlate)?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="animate-spin text-primary h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* ================= HEADER ================= */}
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Trucks</h2>
-          <p className="text-muted-foreground">Fleet inventory and status</p>
+          <h2 className="text-2xl font-bold tracking-tight">Fleet Inventory</h2>
+          <p className="text-sm text-muted-foreground">Manage and track your active vehicles.</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Truck
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" /> Add New Truck
         </Button>
       </div>
 
-      {/* Search */}
+      {/* ================= SEARCH ================= */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
-          placeholder="Search trucks..." 
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10" 
+          placeholder="Search by license plate or truck ID..." 
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Table */}
-        <div className="xl:col-span-2 bg-card rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Truck Number</th>
-                  <th>Driver</th>
-                  <th>Status</th>
-                  <th>Last Location</th>
-                  <th>Fuel</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTrucks.map((truck) => (
-                  <tr key={truck.id}>
-                    <td>
-                      <div>
-                        <p className="font-medium text-foreground">{truck.truckId}</p>
-                        <p className="text-xs text-muted-foreground">{truck.model}</p>
-                      </div>
-                    </td>
-                    <td className="text-foreground">{truck.driver}</td>
-                    <td>
-                      <span className={getStatusBadgeClass(truck.status)}>
-                        {truck.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                        <MapPin className="h-3 w-3" />
-                        <span className="max-w-[200px] truncate">{truck.lastLocation}</span>
-                      </div>
-                    </td>
-                    <td>
+      {/* ================= TABLE ================= */}
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="data-table w-full">
+            <thead>
+              <tr className="bg-muted/50 border-b">
+                <th className="p-4 text-left font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Truck Info</th>
+                <th className="p-4 text-left font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Driver</th>
+                <th className="p-4 text-left font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
+                <th className="p-4 text-left font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Last Location</th>
+                <th className="p-4 text-left font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Fuel</th>
+                <th className="p-4 text-right font-semibold text-muted-foreground uppercase text-[10px] tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => (
+                <tr key={t._id} className="border-b hover:bg-muted/30 transition-colors">
+                  <td className="p-4">
+                    <p className="font-bold text-foreground">{t.licensePlate}</p>
+                    <p className="text-[11px] text-muted-foreground font-medium uppercase">{t.make} {t.model}</p>
+                  </td>
+                  <td className="p-4 text-sm font-medium">
+                    {t.currentDriver ? (
                       <div className="flex items-center gap-2">
-                        <Fuel className="h-4 w-4 text-muted-foreground" />
-                        <Progress value={truck.fuelLevel} className="h-2 w-16" />
-                        <span className="text-xs text-muted-foreground">{truck.fuelLevel}%</span>
+                    
+                        {t.currentDriver.firstName} {t.currentDriver.lastName}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Map Placeholder */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-6 py-4 border-b border-border">
-            <h3 className="text-lg font-semibold text-foreground">Fleet Map</h3>
-            <p className="text-sm text-muted-foreground">Real-time vehicle locations</p>
-          </div>
-          <div className="h-[400px] bg-muted/30 flex flex-col items-center justify-center p-6">
-            <div className="relative w-full h-full rounded-lg bg-gradient-to-br from-muted/50 to-muted overflow-hidden">
-              {/* Simulated map grid */}
-              <div className="absolute inset-0 opacity-20">
-                {[...Array(10)].map((_, i) => (
-                  <div key={`h-${i}`} className="absolute border-t border-border/50 w-full" style={{ top: `${i * 10}%` }} />
-                ))}
-                {[...Array(10)].map((_, i) => (
-                  <div key={`v-${i}`} className="absolute border-l border-border/50 h-full" style={{ left: `${i * 10}%` }} />
-                ))}
-              </div>
-              
-              {/* Truck markers */}
-              <div className="absolute top-[25%] left-[30%] flex flex-col items-center animate-pulse">
-                <div className="h-4 w-4 rounded-full bg-success border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0012</span>
-              </div>
-              <div className="absolute top-[15%] left-[20%] flex flex-col items-center animate-pulse">
-                <div className="h-4 w-4 rounded-full bg-success border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0008</span>
-              </div>
-              <div className="absolute top-[45%] left-[55%] flex flex-col items-center">
-                <div className="h-4 w-4 rounded-full bg-warning border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0015</span>
-              </div>
-              <div className="absolute top-[60%] left-[70%] flex flex-col items-center">
-                <div className="h-4 w-4 rounded-full bg-muted-foreground border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0003</span>
-              </div>
-              <div className="absolute top-[75%] left-[45%] flex flex-col items-center animate-pulse">
-                <div className="h-4 w-4 rounded-full bg-success border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0021</span>
-              </div>
-              <div className="absolute top-[20%] left-[15%] flex flex-col items-center">
-                <div className="h-4 w-4 rounded-full bg-muted-foreground border-2 border-card" />
-                <span className="text-[10px] font-medium bg-card px-1 rounded mt-1">T-0007</span>
-              </div>
-
-              {/* Legend */}
-              <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-success" />
-                  <span>In Transit</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-warning" />
-                  <span>Maintenance</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-muted-foreground" />
-                  <span>Idle</span>
-                </div>
-              </div>
-            </div>
-          </div>
+                    ) : (
+                      <span className="text-muted-foreground italic font-normal">Unassigned</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <span className={getStatusBadgeClass(t.status)}>
+                      {t.status.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="p-4 max-w-[180px] truncate text-xs text-muted-foreground font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-primary/70" />
+                      {t.lastKnownLocation?.address || "No data"}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2.5">
+                      <Progress value={t.fuelLevel || 0} className="h-2 w-12" />
+                      <span className="text-[10px] font-bold text-muted-foreground">{t.fuelLevel ?? 0}%</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedTruck(t)}>
+                      View Profile
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      <AddTruckDialog open={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      
+      <TruckDetailsSheet 
+        truck={selectedTruck} 
+        isOpen={!!selectedTruck} 
+        onClose={() => setSelectedTruck(null)} 
+      />
     </div>
   );
 }

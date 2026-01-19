@@ -11,3 +11,5 @@ export const TRIP_API = {
   STOPS: (id: string) => `/trips/${id}/stops`,
   UPDATE_PROGRESS: (id: string) => `/trips/${id}/progress`,
 } as const;
+
+

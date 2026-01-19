@@ -1,18 +1,7 @@
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Truck, 
-  Route, 
-  AlertTriangle, 
-  FileText, 
-  Settings,
-  LogOut,
-  Bell,
-  Menu
-} from 'lucide-react';
+import { LayoutDashboard, Users, Truck, Route, AlertTriangle, FileText, Settings,LogOut,Bell,Menu} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
@@ -104,23 +93,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
+          
+            {/* <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
                 3
               </span>
-            </Button>
+            </Button> */}
 
             {/* User Info */}
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-medium text-foreground">{user?.name}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
+                <p className="text-sm font-medium text-foreground">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-sm font-medium text-primary-foreground">
-                  {user?.name?.split(' ').map(n => n[0]).join('')}
+                  {user?.firstName?.split(' ').map(n => n[0]).join('')}
                 </span>
               </div>
             </div>

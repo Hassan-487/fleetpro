@@ -15,23 +15,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const success = login(email, password);
-    
-    if (success) {
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password. Try admin@demo.com / admin123');
-    }
-    
+  try {
+    await login(email, password);   // ✅ WAIT for API
+    navigate('/dashboard');         // ✅ success
+  } catch (err) {
+    setError('Invalid email or password');
+  } finally {
     setIsLoading(false);
-  };
+  }
+};
+
 
   return (
     <div className="min-h-screen flex">
@@ -134,14 +131,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="text-center space-y-2 pt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Demo Credentials
-            </p>
-            <p className="text-sm font-mono bg-muted px-3 py-2 rounded">
-              admin@demo.com / admin123
-            </p>
-          </div>
         </div>
       </div>
     </div>

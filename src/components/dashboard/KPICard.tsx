@@ -23,11 +23,7 @@ export function KPICard({ title, value, icon: Icon, trend, variant = 'default' }
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="text-3xl font-bold text-foreground mt-2">{value}</p>
-          {trend && (
-            <p className={`text-sm mt-2 ${trend.isPositive ? 'text-success' : 'text-destructive'}`}>
-              {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}% from last week
-            </p>
-          )}
+          
         </div>
         <div className={`p-3 rounded-lg ${variantStyles[variant]}`}>
           <Icon className="h-6 w-6" />

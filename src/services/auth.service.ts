@@ -1,7 +1,12 @@
-import apiClient, { setToken, removeToken, getToken } from './apiClient';
-import { AUTH_API } from '@/api/auth.api';
+import apiClient, { setToken, removeToken } from "./apiClient";
+import { AUTH_API } from "@/api/auth.api";
 
-// Types
+
+export type UserRole =
+  | "admin"
+  | "support"
+  | "driver";
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -10,117 +15,113 @@ export interface LoginCredentials {
 export interface AuthUser {
   id: string;
   email: string;
-  name: string;
-  role: string;
-  avatar?: string;
+  role: UserRole;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
-  token: string;
 }
 
-export interface RegisterData {
-  email: string;
-  password: string;
-  name: string;
+
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
+  data: {
+    resetToken: string;
+  };
 }
 
-// Auth Service
+
+
 export const authService = {
   /**
-   * Login with email and password
+   * Login user
    */
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    // TODO: Replace with real API when backend is ready
-    // PENDING BACKEND - Currently using mock response
-    
-    // Mock validation for demo
-    if (credentials.email === 'admin@demo.com' && credentials.password === 'admin123') {
-      const mockResponse: LoginResponse = {
-        user: {
-          id: '1',
-          email: credentials.email,
-          name: 'John Administrator',
-          role: 'admin',
-        },
-        token: 'mock_jwt_token_' + Date.now(),
-      };
-      setToken(mockResponse.token);
-      return mockResponse;
-    }
-    
-    // When backend is ready, use this:
-    // const response = await apiClient.post<LoginResponse>(AUTH_API.LOGIN, credentials);
-    // setToken(response.data.token);
-    // return response.data;
-    
-    throw new Error('Invalid credentials');
+  async login(credentials: LoginCredentials): Promise<AuthUser> {
+    const response = await apiClient.post<LoginResponse>(
+      AUTH_API.LOGIN,
+      credentials
+    );
+
+    const { accessToken, refreshToken, user } = response.data;
+
+    // store tokens
+    setToken(accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
+    return user;
   },
 
   /**
-   * Logout current user
+   * Logout user (single session)
    */
   async logout(): Promise<void> {
+    const refreshToken = localStorage.getItem("refreshToken");
+
     try {
-      // TODO: Call backend logout endpoint when ready
-      // await apiClient.post(AUTH_API.LOGOUT);
+      if (refreshToken) {
+        await apiClient.post(AUTH_API.LOGOUT, { refreshToken });
+      }
     } finally {
       removeToken();
+      localStorage.removeItem("refreshToken");
     }
   },
 
   /**
-   * Get current user profile
+   * Refresh access token
    */
-  async getProfile(): Promise<AuthUser> {
-    // TODO: Replace with real API when backend is ready
-    // PENDING BACKEND - Currently using mock response
-    
-    const token = getToken();
-    if (token) {
-      return {
-        id: '1',
-        email: 'admin@demo.com',
-        name: 'John Administrator',
-        role: 'admin',
-      };
-    }
-    
-    // When backend is ready, use this:
-    // const response = await apiClient.get<AuthUser>(AUTH_API.PROFILE);
-    // return response.data;
-    
-    throw new Error('Not authenticated');
+  async refreshToken(): Promise<void> {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) throw new Error("No refresh token");
+
+    const response = await apiClient.post<{
+      accessToken: string;
+      refreshToken: string;
+    }>(AUTH_API.REFRESH, { refreshToken });
+
+    setToken(response.data.accessToken);
+    localStorage.setItem("refreshToken", response.data.refreshToken);
   },
 
   /**
-   * Check if user is authenticated
+   * Check auth state (cheap check)
    */
   isAuthenticated(): boolean {
-    return !!getToken();
+    return !!localStorage.getItem("fleetpro_auth_token");
   },
 
   /**
-   * Register new user
-   */
-  async register(data: RegisterData): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>(AUTH_API.REGISTER, data);
-    setToken(response.data.token);
-    return response.data;
-  },
-
-  /**
-   * Request password reset
+   * Forgot password
    */
   async forgotPassword(email: string): Promise<void> {
     await apiClient.post(AUTH_API.FORGOT_PASSWORD, { email });
   },
 
   /**
-   * Reset password with token
+   * Verify OTP
+   * Updated to correctly map the nested resetToken from your API response
    */
-  async resetPassword(token: string, password: string): Promise<void> {
-    await apiClient.post(AUTH_API.RESET_PASSWORD, { token, password });
+  async verifyOtp(email: string, otp: string): Promise<string> {
+    const res = await apiClient.post<VerifyOtpResponse>(
+      AUTH_API.VERIFY_OTP,
+      { email, otp }
+    );
+    
+    // Accessing the nested path: res.data (Axios) -> .data (Your API) -> .resetToken
+    return res.data.data.resetToken;
   },
+
+  /**
+   * Reset password
+   */
+ async resetPassword(email: string, token: string, password: string): Promise<void> {
+  
+  await apiClient.post(AUTH_API.RESET_PASSWORD, { 
+    email: email, verificationToken: token,newPassword: password });
+},
 };
